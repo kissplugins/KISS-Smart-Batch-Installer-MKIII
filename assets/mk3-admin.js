@@ -1,18 +1,18 @@
 /**
- * SBI MK III - Clean JavaScript
+ * SBI MK III - Clean JavaScript for the primary admin UI.
  *
- * Philosophy:
- * - No FSM
- * - No TypeScript
- * - Simple jQuery AJAX
- * - Sequential flow
- * - Single source of truth (server-rendered HTML)
+ * @version 1.0.85
  *
- * @version 1.0.81
+ * @safeguard This script follows a simple "fetch-all, render-client-side" pattern
+ *   and is the current, preferred architecture for this plugin's UI. It intentionally
+ *   avoids the complexity of the previous FSM/TypeScript-based system.
+ *
+ *   DO NOT add complex state management, build steps (TypeScript/Sass), or
+ *   progressive loading. All data is fetched in a single AJAX call from
+ *   RepositoryManagerMK3 and then sorted/filtered/paginated on the client.
+ *   This is by design to keep the codebase simple and maintainable.
  */
-
-(function($) {
-    'use strict';
+(function($) {    'use strict';
 
     var SBI_MK3 = {
 

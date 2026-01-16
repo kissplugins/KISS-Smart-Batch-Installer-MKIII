@@ -20,6 +20,18 @@ use SBI\Services\GitHubService;
 use SBI\Services\PluginInstallationService;
 use SBI\Enums\PluginState;
 
+/**
+ * Manages the "SBI MKIII" admin page, which is the primary UI for this plugin.
+ *
+ * @since 1.0.80
+ *
+ * @phptcs-safeguard This class represents the simplified, current architecture.
+ *   It intentionally avoids the complexity of the previous FSM/TypeScript-based
+ *   system. Do not add progressive loading, complex state machines, or build
+ *   steps to this implementation. New UI features for the repository list
+ *   should be added here and in assets/mk3-admin.js, following the simple
+ *   "fetch-all, render-client-side" pattern.
+ */
 class RepositoryManagerMK3 {
 
     private GitHubService $github_service;
