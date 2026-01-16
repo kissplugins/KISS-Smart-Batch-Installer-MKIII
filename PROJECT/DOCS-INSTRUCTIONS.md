@@ -6,6 +6,9 @@
 - **3-COMPLETED**: Finished documents with completion dates
 - **4-MISC**: Archives and uncertain status items
 
+Docs outside this folder structure are:
+- Changelog - please continuously udpate this file with every change
+
 ## Document Metadata (Required at Top)
 ```markdown
 ---
