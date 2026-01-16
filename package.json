@@ -1,0 +1,16 @@
+{
+  "name": "kiss-smart-batch-installer",
+  "private": true,
+  "version": "1.0.17",
+  "description": "TypeScript scaffold for KISS Smart Batch Installer (Phase 0)",
+  "scripts": {
+    "build:ts": "tsc -p tsconfig.json",
+    "watch:ts": "tsc -w -p tsconfig.json",
+    "check:fsm-enum-parity": "node scripts/check-fsm-enum-parity.js"
+  },
+  "devDependencies": {
+    "@types/jquery": "^3.5.29",
+    "typescript": "^5.5.4"
+  }
+}
+

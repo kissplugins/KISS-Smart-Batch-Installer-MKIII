@@ -1,0 +1,58 @@
+/**
+ * SBI MK III - Clean CSS
+ * 
+ * @version 1.0.80
+ */
+
+/* Status badges */
+.sbi-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1;
+}
+
+.sbi-badge-gray {
+    background: #f0f0f1;
+    color: #50575e;
+}
+
+.sbi-badge-yellow {
+    background: #fcf9e8;
+    color: #8a6d3b;
+}
+
+.sbi-badge-green {
+    background: #d4edda;
+    color: #155724;
+}
+
+.sbi-badge-blue {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.sbi-badge-red {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* Table styling */
+#sbi-mk3-table {
+    margin-top: 20px;
+}
+
+#sbi-mk3-table td {
+    vertical-align: middle;
+}
+
+/* Loading state */
+#sbi-mk3-loading {
+    padding: 20px;
+    text-align: center;
+    font-size: 16px;
+    color: #666;
+}
+
