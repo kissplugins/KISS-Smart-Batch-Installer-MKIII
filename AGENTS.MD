@@ -2,6 +2,42 @@
  AI / LLM AGENT INSTRUCTIONS - SMART BATCH INSTALLER FSM
 ========================================================================
 
+## 🔧 LOCAL ENVIRONMENT SETUP
+
+**IMPORTANT**: This project has a local environment configuration file that provides
+WP-CLI access and other machine-specific paths.
+
+### Quick Start for AI Agents
+
+1. **Check for `.env.local` file** in the project root
+2. **Source the file** to access environment variables:
+   ```bash
+   source .env.local
+   ```
+3. **Use WP-CLI** via the configured variables:
+   ```bash
+   $WPCLI_PATH $LOCAL_SITE_NAME plugin list
+   $WPCLI_PATH $LOCAL_SITE_NAME core version
+   $WPCLI_PATH $LOCAL_SITE_NAME db query "SELECT ..."
+   ```
+
+### Environment Variables Available
+
+- `WPCLI_PATH` - Path to the Local WP-CLI wrapper script
+- `LOCAL_SITE_NAME` - Current Local site name
+- `WPCLI_COMMAND` - Full command template for quick use
+- `WP_ROOT` - WordPress installation root
+- `PLUGIN_DIR` - This plugin's directory
+
+### Benefits
+
+- ✅ No need to ask user for WP-CLI path
+- ✅ Consistent across all AI agent sessions
+- ✅ Machine-specific (git-ignored)
+- ✅ Self-documenting with inline instructions
+
+---
+
 ## 🚨 CRITICAL: FINITE STATE MACHINE (FSM) PROTECTION 🚨
 
 This plugin's core architecture is built around a Finite State Machine (FSM) that manages
