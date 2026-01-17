@@ -116,8 +116,8 @@ abstract class Abstract_Settings_Page {
         if (!current_user_can('manage_options')) {
             wp_die(__('You do not have sufficient permissions to access this page.', 'nhk-framework'));
         }
-        
-        $active_tab = $_GET['tab'] ?? 'general';
+
+        $active_tab = sanitize_key( $_GET['tab'] ?? 'general' );
         $tabs = $this->get_tabs();
         
         ?>
