@@ -39,6 +39,12 @@ interface FilterState {
 }
 
 /**
+ * @deprecated 1.0.80 This class is the core of the deprecated FSM/TypeScript
+ *   architecture. It is not used by the primary "SBI MKIII" interface. New UI
+ *   features should be added to `assets/mk3-admin.js`. This class and its
+ *   related files are retained for potential backward compatibility or future
+ *   (non-UI) batch processing needs. Do not build new UI features on this.
+ *
  * ⚠️  CRITICAL FSM CORE CLASS - DO NOT REFACTOR WITHOUT CAREFUL CONSIDERATION ⚠️
  *
  * This is the heart of the Smart Batch Installer's state management system.

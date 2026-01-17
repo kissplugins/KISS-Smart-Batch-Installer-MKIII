@@ -5,6 +5,22 @@ All notable changes to the KISS Smart Batch Installer will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- README with setup, usage, and development notes.
+
+## [1.0.85] - 2026-01-16
+
+### Changed
+- **Search Improvement**: Updated the client-side search on the MK3 page from a strict exact match to a more flexible partial match (contains) on the repository name.
+
+## [1.0.84] - 2026-01-16
+
+### Added
+- **Client-Side Search**: Added a search bar to the MK3 repository page to filter repositories by name (exact match).
+- **Client-Side Sorting**: Implemented sorting for the "Repository" and "Status" columns. Users can click the headers to sort the table ascending or descending.
+
 ## [1.0.83] - 2026-01-16
 
 ### Changed

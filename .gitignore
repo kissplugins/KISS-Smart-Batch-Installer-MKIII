@@ -1,1 +1,11 @@
 .DS_Store
+
+# Local environment configuration
+.env.local
+.env.*.local
+
+# Data analysis temporary files (from AGENTS.md pattern)
+data-stream.json
+data-stream-*.json
+data-stream.txt
+data-stream.csv

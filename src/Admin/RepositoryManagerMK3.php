@@ -20,6 +20,18 @@ use SBI\Services\GitHubService;
 use SBI\Services\PluginInstallationService;
 use SBI\Enums\PluginState;
 
+/**
+ * Manages the "SBI MKIII" admin page, which is the primary UI for this plugin.
+ *
+ * @since 1.0.80
+ *
+ * @phptcs-safeguard This class represents the simplified, current architecture.
+ *   It intentionally avoids the complexity of the previous FSM/TypeScript-based
+ *   system. Do not add progressive loading, complex state machines, or build
+ *   steps to this implementation. New UI features for the repository list
+ *   should be added here and in assets/mk3-admin.js, following the simple
+ *   "fetch-all, render-client-side" pattern.
+ */
 class RepositoryManagerMK3 {
 
     private GitHubService $github_service;
@@ -144,6 +156,19 @@ class RepositoryManagerMK3 {
                 </div>
             </div>
 
+            <div style="margin-top: 15px; padding: 15px; border-top: 1px solid #eee;">
+                <label for="sbi-repo-search" style="font-weight: 600; margin-right: 10px;">
+                    Search Repository:
+                </label>
+                <input
+                    type="text"
+                    id="sbi-repo-search"
+                    class="regular-text"
+                    placeholder="Filter by repository name..."
+                    style="width: 350px;"
+                />
+            </div>
+
             <div id="sbi-mk3-loading">
                 <p>Loading repositories...</p>
             </div>
@@ -162,9 +187,9 @@ class RepositoryManagerMK3 {
             <table class="wp-list-table widefat fixed striped" id="sbi-mk3-table" style="display: none;">
                 <thead>
                     <tr>
-                        <th>Repository</th>
+                        <th class="sbi-sortable" data-sort="name">Repository <span class="dashicons dashicons-sort"></span></th>
                         <th>Description</th>
-                        <th>Status</th>
+                        <th class="sbi-sortable" data-sort="state">Status <span class="dashicons dashicons-sort"></span></th>
                         <th>Actions</th>
                     </tr>
                 </thead>

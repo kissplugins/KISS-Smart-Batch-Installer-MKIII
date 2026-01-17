@@ -1,25 +1,30 @@
 /**
- * SBI MK III - Clean JavaScript
- * 
- * Philosophy:
- * - No FSM
- * - No TypeScript
- * - Simple jQuery AJAX
- * - Sequential flow
- * - Single source of truth (server-rendered HTML)
- * 
- * @version 1.0.80
+ * SBI MK III - Clean JavaScript for the primary admin UI.
+ *
+ * @version 1.0.85
+ *
+ * @safeguard This script follows a simple "fetch-all, render-client-side" pattern
+ *   and is the current, preferred architecture for this plugin's UI. It intentionally
+ *   avoids the complexity of the previous FSM/TypeScript-based system.
+ *
+ *   DO NOT add complex state management, build steps (TypeScript/Sass), or
+ *   progressive loading. All data is fetched in a single AJAX call from
+ *   RepositoryManagerMK3 and then sorted/filtered/paginated on the client.
+ *   This is by design to keep the codebase simple and maintainable.
  */
+(function($) {    'use strict';
 
-(function($) {
-    'use strict';
-    
     var SBI_MK3 = {
 
         currentPage: 1,
         totalPages: 1,
-        allRepositories: [],
         perPage: 15,
+        allRepositories: [], // The master list of all repos
+        filteredRepositories: [], // The list after search/sort is applied
+        currentSort: {
+            key: 'name',
+            direction: 'asc'
+        },
 
         /**
          * Initialize
@@ -36,7 +41,7 @@
             // Load repositories
             this.loadRepositories();
         },
-        
+
         /**
          * Bind event handlers
          */
@@ -70,6 +75,24 @@
                     self.updatePerPage();
                 }
             });
+            
+            // Search input
+            $('#sbi-repo-search').on('keyup', function() {
+                self.applyFiltersAndSort();
+            });
+            
+            // Sortable headers
+            $(document).on('click', '.sbi-sortable', function() {
+                var newSortKey = $(this).data('sort');
+                if (self.currentSort.key === newSortKey) {
+                    self.currentSort.direction = self.currentSort.direction === 'asc' ? 'desc' : 'asc';
+                } else {
+                    self.currentSort.key = newSortKey;
+                    self.currentSort.direction = 'asc';
+                }
+                self.applyFiltersAndSort();
+            });
+
 
             // Pagination controls (delegated)
             $(document).on('click', '.sbi-page-link', function(e) {
@@ -99,7 +122,7 @@
                 self.deactivatePlugin(repo, $(this));
             });
         },
-        
+
         /**
          * Load repositories via AJAX
          */
@@ -107,8 +130,6 @@
             var self = this;
 
             console.log('[SBI MK3] Loading repositories...');
-            console.log('[SBI MK3] AJAX URL:', sbiMK3.ajaxUrl);
-            console.log('[SBI MK3] Nonce:', sbiMK3.nonce);
 
             $('#sbi-mk3-loading').show();
             $('#sbi-mk3-table').hide();
@@ -125,12 +146,9 @@
                     console.log('[SBI MK3] AJAX response:', response);
 
                     if (response.success) {
-                        // Store all repositories
                         self.allRepositories = response.data.rows;
                         self.currentPage = 1;
-
-                        // Render first page
-                        self.renderPage();
+                        self.applyFiltersAndSort();
                     } else {
                         var errorMsg = response.data.message || 'Unknown error';
                         console.error('[SBI MK3] Error:', errorMsg);
@@ -139,13 +157,79 @@
                 },
                 error: function(xhr, status, error) {
                     console.error('[SBI MK3] AJAX error:', error);
-                    console.error('[SBI MK3] XHR:', xhr);
                     self.showError('AJAX error: ' + error + ' (Status: ' + status + ')');
                 },
                 complete: function() {
                     $('#sbi-mk3-loading').hide();
                 }
             });
+        },
+
+        /**
+         * Central function to apply search and sort, then re-render.
+         */
+        applyFiltersAndSort: function() {
+            var self = this;
+            var searchTerm = $('#sbi-repo-search').val().trim().toLowerCase();
+            
+            // 1. Filter by search term
+            var filtered = this.allRepositories;
+            if (searchTerm) {
+                filtered = this.allRepositories.filter(function(repo) {
+                    // Partial match on 'name'
+                    return repo.name.toLowerCase().includes(searchTerm);
+                });
+            }
+
+            // 2. Sort the filtered data
+            var sortKey = this.currentSort.key;
+            var sortDir = this.currentSort.direction;
+            
+            // Define a priority map for sorting by state
+            const statePriority = {
+                'installed_active': 1,
+                'installed_inactive': 2,
+                'available': 3,
+                'installing': 4,
+                'error': 5,
+            };
+
+            filtered.sort(function(a, b) {
+                let valA, valB;
+
+                if (sortKey === 'state') {
+                    valA = statePriority[a.state] || 99;
+                    valB = statePriority[b.state] || 99;
+                } else {
+                    valA = a[sortKey].toLowerCase();
+                    valB = b[sortKey].toLowerCase();
+                }
+
+                if (valA < valB) {
+                    return sortDir === 'asc' ? -1 : 1;
+                }
+                if (valA > valB) {
+                    return sortDir === 'asc' ? 1 : -1;
+                }
+                return 0;
+            });
+            
+            this.filteredRepositories = filtered;
+            this.currentPage = 1; // Reset to first page after search/sort
+            this.updateSortIcons();
+            this.renderPage();
+        },
+        
+        /**
+         * Update sort icons in table headers
+         */
+        updateSortIcons: function() {
+            $('.sbi-sortable .dashicons').removeClass('dashicons-arrow-up dashicons-arrow-down').addClass('dashicons-sort');
+            
+            var $activeHeader = $('.sbi-sortable[data-sort="' + this.currentSort.key + '"]');
+            var iconClass = this.currentSort.direction === 'asc' ? 'dashicons-arrow-up' : 'dashicons-arrow-down';
+            
+            $activeHeader.find('.dashicons').removeClass('dashicons-sort').addClass(iconClass);
         },
 
         /**
@@ -162,9 +246,6 @@
                 return;
             }
 
-            console.log('[SBI MK3] Switching to organization:', organization);
-
-            // Update UI
             $button.prop('disabled', true).text('Switching...');
             $status.text('').css('color', '#46b450');
 
@@ -178,10 +259,7 @@
                 },
                 success: function(response) {
                     if (response.success) {
-                        console.log('[SBI MK3] Organization switched:', response.data);
                         $status.text('✓ Switched to ' + organization).css('color', '#46b450');
-
-                        // Reload repositories
                         setTimeout(function() {
                             self.loadRepositories();
                         }, 500);
@@ -190,8 +268,8 @@
                         $status.text('').css('color', '#dc3232');
                     }
                 },
-                error: function(xhr, status, error) {
-                    alert('AJAX error: ' + error);
+                error: function(xhr) {
+                    alert('AJAX error: ' + xhr.statusText);
                     $status.text('').css('color', '#dc3232');
                 },
                 complete: function() {
@@ -209,16 +287,9 @@
             var $button = $('#sbi-update-per-page');
             var $status = $('#sbi-per-page-status');
 
-            // Validate
-            if (perPage < 5) {
-                perPage = 5;
-                $('#sbi-per-page').val(5);
-            } else if (perPage > 100) {
-                perPage = 100;
-                $('#sbi-per-page').val(100);
-            }
-
-            console.log('[SBI MK3] Updating per page to:', perPage);
+            if (perPage < 5) perPage = 5;
+            if (perPage > 100) perPage = 100;
+            $('#sbi-per-page').val(perPage);
 
             $button.prop('disabled', true).text('Updating...');
             $status.text('').css('color', '#46b450');
@@ -233,19 +304,16 @@
                 },
                 success: function(response) {
                     if (response.success) {
-                        console.log('[SBI MK3] Per page updated:', response.data);
                         self.perPage = perPage;
                         $status.text('✓ Updated').css('color', '#46b450');
-
-                        // Re-render current page
                         self.renderPage();
                     } else {
                         alert('Failed to update: ' + (response.data.message || 'Unknown error'));
                         $status.text('').css('color', '#dc3232');
                     }
                 },
-                error: function(xhr, status, error) {
-                    alert('AJAX error: ' + error);
+                error: function(xhr) {
+                    alert('AJAX error: ' + xhr.statusText);
                     $status.text('').css('color', '#dc3232');
                 },
                 complete: function() {
@@ -254,86 +322,65 @@
             });
         },
 
-        /**
-         * Show error message
-         */
         showError: function(message) {
             $('#sbi-mk3-error-message').text(message);
             $('#sbi-mk3-error').show();
         },
 
         /**
-         * Render current page of repositories
+         * Render current page of repositories (using filteredRepositories)
          */
         renderPage: function() {
-            var self = this;
-
-            // Calculate pagination
-            this.totalPages = Math.ceil(this.allRepositories.length / this.perPage);
-
-            // Ensure current page is valid
+            this.totalPages = Math.ceil(this.filteredRepositories.length / this.perPage);
             if (this.currentPage > this.totalPages) {
                 this.currentPage = this.totalPages || 1;
             }
 
-            // Get repositories for current page
             var startIndex = (this.currentPage - 1) * this.perPage;
             var endIndex = startIndex + this.perPage;
-            var pageRepos = this.allRepositories.slice(startIndex, endIndex);
+            var pageRepos = this.filteredRepositories.slice(startIndex, endIndex);
 
-            // Render table
             var $tbody = $('#sbi-mk3-tbody');
             $tbody.empty();
 
-            console.log('[SBI MK3] Rendering page ' + this.currentPage + ' of ' + this.totalPages);
-
             if (pageRepos.length === 0) {
-                $tbody.append('<tr><td colspan="4" style="text-align: center; padding: 20px;">No repositories found</td></tr>');
+                var message = $('#sbi-repo-search').val() ? 'No repositories match your search.' : 'No repositories found.';
+                $tbody.append('<tr><td colspan="4" style="text-align: center; padding: 20px;">' + message + '</td></tr>');
                 $('#sbi-mk3-pagination-top').hide();
                 $('#sbi-mk3-pagination-bottom').hide();
             } else {
                 $.each(pageRepos, function(i, row) {
                     $tbody.append(row.html);
                 });
-
-                // Render pagination controls
                 this.renderPaginationControls();
             }
 
             $('#sbi-mk3-table').show();
-            console.log('[SBI MK3] Rendering complete');
         },
 
         /**
-         * Render pagination controls
+         * Render pagination controls (using filteredRepositories)
          */
         renderPaginationControls: function() {
+            var totalItems = this.filteredRepositories.length;
             var startIndex = (this.currentPage - 1) * this.perPage + 1;
-            var endIndex = Math.min(this.currentPage * this.perPage, this.allRepositories.length);
+            var endIndex = Math.min(this.currentPage * this.perPage, totalItems);
 
-            // Info text
-            var infoText = 'Showing ' + startIndex + '-' + endIndex + ' of ' + this.allRepositories.length + ' repositories';
-            $('#sbi-mk3-showing-info').text(infoText);
+            $('#sbi-mk3-showing-info').text('Showing ' + startIndex + '-' + endIndex + ' of ' + totalItems + ' repositories');
 
-            // Pagination buttons
             var html = '';
-
-            // Previous button
             if (this.currentPage > 1) {
                 html += '<button class="button sbi-page-link" data-page="' + (this.currentPage - 1) + '">« Previous</button> ';
             } else {
                 html += '<button class="button" disabled>« Previous</button> ';
             }
 
-            // Page numbers
             var startPage = Math.max(1, this.currentPage - 2);
             var endPage = Math.min(this.totalPages, this.currentPage + 2);
 
             if (startPage > 1) {
                 html += '<button class="button sbi-page-link" data-page="1">1</button> ';
-                if (startPage > 2) {
-                    html += '<span style="padding: 0 5px;">...</span> ';
-                }
+                if (startPage > 2) html += '<span style="padding: 0 5px;">...</span> ';
             }
 
             for (var i = startPage; i <= endPage; i++) {
@@ -345,13 +392,10 @@
             }
 
             if (endPage < this.totalPages) {
-                if (endPage < this.totalPages - 1) {
-                    html += '<span style="padding: 0 5px;">...</span> ';
-                }
+                if (endPage < this.totalPages - 1) html += '<span style="padding: 0 5px;">...</span> ';
                 html += '<button class="button sbi-page-link" data-page="' + this.totalPages + '">' + this.totalPages + '</button> ';
             }
 
-            // Next button
             if (this.currentPage < this.totalPages) {
                 html += '<button class="button sbi-page-link" data-page="' + (this.currentPage + 1) + '">Next »</button>';
             } else {
@@ -360,141 +404,69 @@
 
             $('#sbi-mk3-pagination-controls').html(html);
             $('#sbi-mk3-pagination-controls-bottom').html(html);
-
             $('#sbi-mk3-pagination-top').show();
             $('#sbi-mk3-pagination-bottom').show();
         },
 
-        /**
-         * Go to specific page
-         */
         goToPage: function(page) {
             this.currentPage = parseInt(page);
             this.renderPage();
-
-            // Scroll to top of table
             $('html, body').animate({
                 scrollTop: $('#sbi-mk3-table').offset().top - 100
             }, 300);
         },
-        
+
         /**
-         * Install plugin
+         * Perform an action and then reload the data state.
          */
+        performAction: function(action, repo, $button) {
+            var self = this;
+            var actionMessages = {
+                'install': { start: 'Installing...', fail: 'Install' },
+                'activate': { start: 'Activating...', fail: 'Activate' },
+                'deactivate': { start: 'Deactivating...', fail: 'Deactivate' }
+            };
+            
+            $button.prop('disabled', true).text(actionMessages[action].start);
+
+            $.ajax({
+                url: sbiMK3.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'sbi_mk3_' + action + '_plugin',
+                    nonce: sbiMK3.nonce,
+                    repo: repo
+                },
+                success: function(response) {
+                    if (response.success) {
+                        self.reloadAllData();
+                    } else {
+                        alert(action + ' failed: ' + (response.data.message || 'Unknown error'));
+                        $button.prop('disabled', false).text(actionMessages[action].fail);
+                    }
+                },
+                error: function(xhr) {
+                    alert('AJAX error: ' + xhr.statusText);
+                    $button.prop('disabled', false).text(actionMessages[action].fail);
+                }
+            });
+        },
+
         installPlugin: function(repo, $button) {
-            var self = this;
-            var $row = $button.closest('tr');
-            
-            console.log('[SBI MK3] Installing:', repo);
-            
-            // Update UI
-            $button.prop('disabled', true).text('Installing...');
-            
-            $.ajax({
-                url: sbiMK3.ajaxUrl,
-                type: 'POST',
-                data: {
-                    action: 'sbi_mk3_install_plugin',
-                    nonce: sbiMK3.nonce,
-                    repo: repo
-                },
-                success: function(response) {
-                    if (response.success) {
-                        console.log('[SBI MK3] Install success:', response.data);
-                        // Reload the row
-                        self.reloadRow($row, repo);
-                    } else {
-                        alert('Install failed: ' + (response.data.message || 'Unknown error'));
-                        $button.prop('disabled', false).text('Install');
-                    }
-                },
-                error: function(xhr, status, error) {
-                    alert('AJAX error: ' + error);
-                    $button.prop('disabled', false).text('Install');
-                }
-            });
+            this.performAction('install', repo, $button);
+        },
+        activatePlugin: function(repo, $button) {
+            this.performAction('activate', repo, $button);
+        },
+        deactivatePlugin: function(repo, $button) {
+            this.performAction('deactivate', repo, $button);
         },
         
         /**
-         * Activate plugin
+         * Reload all repository data and re-apply filters and sort.
          */
-        activatePlugin: function(repo, $button) {
+        reloadAllData: function() {
             var self = this;
-            var $row = $button.closest('tr');
-
-            console.log('[SBI MK3] Activating:', repo);
-
-            // Update UI
-            $button.prop('disabled', true).text('Activating...');
-
-            $.ajax({
-                url: sbiMK3.ajaxUrl,
-                type: 'POST',
-                data: {
-                    action: 'sbi_mk3_activate_plugin',
-                    nonce: sbiMK3.nonce,
-                    repo: repo
-                },
-                success: function(response) {
-                    if (response.success) {
-                        console.log('[SBI MK3] Activate success:', response.data);
-                        self.reloadRow($row, repo);
-                    } else {
-                        alert('Activate failed: ' + (response.data.message || 'Unknown error'));
-                        $button.prop('disabled', false).text('Activate');
-                    }
-                },
-                error: function(xhr, status, error) {
-                    alert('AJAX error: ' + error);
-                    $button.prop('disabled', false).text('Activate');
-                }
-            });
-        },
-
-        /**
-         * Deactivate plugin
-         */
-        deactivatePlugin: function(repo, $button) {
-            var self = this;
-            var $row = $button.closest('tr');
-
-            console.log('[SBI MK3] Deactivating:', repo);
-
-            // Update UI
-            $button.prop('disabled', true).text('Deactivating...');
-
-            $.ajax({
-                url: sbiMK3.ajaxUrl,
-                type: 'POST',
-                data: {
-                    action: 'sbi_mk3_deactivate_plugin',
-                    nonce: sbiMK3.nonce,
-                    repo: repo
-                },
-                success: function(response) {
-                    if (response.success) {
-                        console.log('[SBI MK3] Deactivate success:', response.data);
-                        self.reloadRow($row, repo);
-                    } else {
-                        alert('Deactivate failed: ' + (response.data.message || 'Unknown error'));
-                        $button.prop('disabled', false).text('Deactivate');
-                    }
-                },
-                error: function(xhr, status, error) {
-                    alert('AJAX error: ' + error);
-                    $button.prop('disabled', false).text('Deactivate');
-                }
-            });
-        },
-
-        /**
-         * Reload a single row (reload all and stay on current page)
-         */
-        reloadRow: function($row, repo) {
-            var currentPage = this.currentPage;
-            var self = this;
-
-            // Reload all repositories but maintain current page
             $.ajax({
                 url: sbiMK3.ajaxUrl,
                 type: 'POST',
@@ -505,15 +477,14 @@
                 success: function(response) {
                     if (response.success) {
                         self.allRepositories = response.data.rows;
-                        self.currentPage = currentPage;
-                        self.renderPage();
+                        // Don't reset page, just re-apply filters and render
+                        self.applyFiltersAndSort();
                     }
                 }
             });
         }
     };
 
-    // Initialize on document ready
     $(document).ready(function() {
         SBI_MK3.init();
     });

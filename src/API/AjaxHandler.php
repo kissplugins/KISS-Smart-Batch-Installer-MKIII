@@ -19,6 +19,12 @@ use SBI\Enums\PluginState;
 
 /**
  * AJAX handler class.
+ *
+ * @deprecated 1.0.80 This entire class is part of the deprecated FSM/TypeScript
+ *   architecture. It is not used by the primary "SBI MKIII" interface. New UI
+ *   features should be added to `SBI\Admin\RepositoryManagerMK3` and its
+ *   corresponding AJAX handlers. This class is retained for potential
+ *   backward compatibility or future (non-UI) batch processing needs.
  */
 class AjaxHandler {
 
