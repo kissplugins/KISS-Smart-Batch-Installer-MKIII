@@ -1,7 +1,7 @@
 # KISS Smart Batch Installer MKIII
 
-Batch-install and manage WordPress plugins from GitHub repositories using a
-simple, sequential workflow. Built on the NHK framework and shipped with an
+Batch-install and manage WordPress plugins from GitHub repositories. 
+Built on the NHK framework and shipped with an
 admin UI for installing, activating, and deactivating plugins by repository.
 
 ## Overview
