@@ -1,0 +1,42 @@
+name: PHP Lint
+
+# Only run on pull requests, not on commits
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - '**.php'
+      - 'scripts/php-lint.sh'
+      - '.github/workflows/php-lint.yml'
+
+# Prevent concurrent runs for the same PR
+concurrency:
+  group: php-lint-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  php-lint:
+    name: PHP Syntax Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.0'
+          coverage: none
+      
+      - name: Display PHP version
+        run: php --version
+      
+      - name: Make lint script executable
+        run: chmod +x scripts/php-lint.sh
+      
+      - name: Run PHP Lint
+        run: ./scripts/php-lint.sh
+

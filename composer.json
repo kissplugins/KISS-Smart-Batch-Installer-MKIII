@@ -33,6 +33,7 @@
     },
     "scripts": {
         "test": "phpunit",
+        "lint": "bash scripts/php-lint.sh",
         "phpcs": "phpcs --standard=WordPress src/",
         "phpstan": "phpstan analyse src/ --level=6",
         "post-install-cmd": [
