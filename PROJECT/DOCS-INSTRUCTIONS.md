@@ -2,6 +2,7 @@
 
 ## Folder Structure
 - **1-INBOX**: All new documents start here
+All files should be named with Prefix of P1-P3 followed by a dash and the name of the document. This will help us to quickly understand the priority of the document and the status without opening it up. This should be reflected in the metadata of the document as well.
 - **2-IN PROGRESS**: Active work only (max 3 documents)
 - **3-COMPLETED**: Finished documents with completion dates
 - **4-MISC**: Archives and uncertain status items
