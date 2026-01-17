@@ -10,6 +10,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - README with setup, usage, and development notes.
 
+## [1.0.84] - 2026-01-17
+
+### Fixed
+- **Security**: Added `sanitize_key()` to `$_GET['tab']` superglobal read in `framework/Abstracts/Abstract_Settings_Page.php`
+  - Prevents potential XSS via URL manipulation
+  - Addresses WP Code Check finding for unsanitized input
+  - Maintains compatibility with existing tab naming conventions
+
+### Added
+- **Development Tools**: Created standardized local environment setup for WP-CLI access
+  - Added `.env.local` file with machine-specific WP-CLI paths (git-ignored)
+  - Added `.env.local.example` template for new developers
+  - Updated `AGENTS.MD` with local environment setup instructions
+  - Created `PROJECT/4-MISC/ENV-LOCAL-SETUP.md` documentation
+  - AI agents can now access WP-CLI without manual path configuration
+
+- **CI/CD**: Implemented PHP lint check for local development and GitHub Actions
+  - Added `scripts/php-lint.sh` for syntax validation
+  - Added `.github/workflows/php-lint.yml` (PR-only, no concurrent runs)
+  - Added `composer lint` script
+  - Created `LINT-QUICK-REFERENCE.md` and `PROJECT/4-MISC/PHP-LINT-SETUP.md`
+  - Validates 28 PHP files across `src/`, `framework/`, and main plugin file
+
+- **Documentation**: WP Code Check analysis and grep pattern solutions
+  - Created `PROJECT/4-MISC/WP-CODE-CHECK-REVIEW.md` - Full security audit results
+  - Created `PROJECT/4-MISC/WPCC-FIXES-2026-01-17.md` - Summary of fixes
+  - Created `PROJECT/4-MISC/GREP-PATTERN-TIMEOUT-DETECTION.md` - Technical grep patterns
+  - Created `PROJECT/4-MISC/GREP-SOLUTION-SUMMARY.md` - Quick reference guide
+  - Created `PROJECT/4-MISC/GREP-PATTERN-COMPARISON.md` - Approach comparison
+  - Created `PROJECT/4-MISC/check-wp-remote-timeout.sh` - Production-ready detection script
+
+### Changed
+- Updated `.gitignore` to exclude `.env.local`, `.env.*.local`, and `data-stream.json` files
+
+### Security
+- **Audit Results**: WP Code Check findings reviewed and addressed
+  - ✅ All `wp_remote_*` calls verified to have explicit timeout arguments
+  - ✅ All AJAX handlers properly protected with nonce/capability checks
+  - ✅ Consistent sanitization patterns throughout codebase
+  - ❌ No `debugger;` statements found in JavaScript files (false positive)
+  - ⚠️ Plugin uses AJAX-only architecture (no REST API endpoints)
+  - Overall security rating: **EXCELLENT**
+
 ## [1.0.85] - 2026-01-16
 
 ### Changed
